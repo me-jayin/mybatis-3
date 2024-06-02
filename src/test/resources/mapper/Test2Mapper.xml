@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="xyz.me4cxy.mapper.Test2Mapper">
+
+    <resultMap id="User" type="xyz.me4cxy.dto.User">
+        <result column="usr" property="usr" />
+        <collection property="address" ofType="xyz.me4cxy.dto.Address" javaType="list" />
+    </resultMap>
+
+    <select id="selectOne" resultType="xyz.me4cxy.dto.User">
+        SELECT ('123' + 1) AS usr, 'abc' pwd, '广东省' `province`, '深圳' `city`
+    </select>
+</mapper>

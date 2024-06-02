@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="xyz.me4cxy.mapper.TestMapper">
+
+    <!-- 二级缓存配置，具体看 org.apache.ibatis.mapping.CacheBuilder.build
+        type：缓存的具体类型。默认 PERPETUAL，也可通过实现 org.apache.ibatis.cache.Cache 接口，
+             并提供一个接收 namespace（String）的构造器即可
+        eviction：缓存过期策略，可选值：LRU（默认）、FIFO、SOFT、WEAK，也可通过实现 org.apache.ibatis.cache.Cache 接口，
+             并提供一个接收 Cache缓存对象 的构造器即可
+        flushInterval：缓存刷新间隔，但达到刷新间隔时，将会清空缓存数据（mybatis会将原Cache包装一层 ScheduledCache）
+        size：缓存最大大小（是否支持具体看type）
+        readOnly：是否只读，如果为true时，则原对象会被包装为 SerializedCache。
+             可用于减少对象占用空间，要求缓存对象实现 Serializable 接口，底层吃饭数据会被序列号为 byte[]，
+        blocking：是否阻塞，也就是get不到时，则等到有put的操作才返回。如果为true会被包装为 BlockingCache
+
+        子标签properties：对应 cache 的set方法，
+             例如 cache 实现类有方法 setTimeout(long t)，那么可通过配置 <properties name="timeout" value="123" /> 来设置值
+    -->
+<!--    <cache type="PERPETUAL">-->
+<!--        <property name="config" value="config-value"/>-->
+<!--    </cache>-->
+<!--    &lt;!&ndash; 引用 Test2Mapper  &ndash;&gt;-->
+<!--    <cache-ref namespace="xyz.me4cxy.mapper.Test2Mapper"/>-->
+
+
+    <!-- 对最终参数的映射，用于sql中使用 ? 的预制参数方法
+             mybatis中，对 占位符#{} 解析后，最终会将其解析成 List<ParameterMapping>，在 org.apache.ibatis.scripting.defaults.DefaultParameterHandler.setParameters 中设置 PreparedStatement 的
+             值时，会根据最终的 List<ParameterMapping> 来进行参数映射处理，最终取到每个 ? 对应的值。
+         而 <parameterMap> 标签，则可以在百分百明确参数顺序的时候，使用 ? 来按 <parameter> 的顺序一一将值设置
+         该方式并不常用，也不建议使用（? 一多后期维护困难）
+     -->
+    <parameterMap id="UserParamMap" type="xyz.me4cxy.dto.Address">
+        <parameter property="city" javaType="string" />
+        <parameter property="province" javaType="string" />
+        <parameter property="city" javaType="string" />
+    </parameterMap>
+    <select id="selectOfParamMap" resultType="xyz.me4cxy.dto.User" parameterMap="UserParamMap">
+        <!-- 等同于常规的 SELECT #{city} usr, #{province} pwd, #{city} test -->
+        SELECT ? usr, ? pwd, ? test
+    </select>
+
+    <resultMap id="usr" type="string" />
+
+    <!-- extends：可用于继承指定 resultMap 的配置 -->
+    <resultMap id="User" type="xyz.me4cxy.dto.User">
+<!--        &lt;!&ndash; 指定构造器参数 &ndash;&gt;-->
+<!--        <constructor>-->
+<!--            &lt;!&ndash; 按构造器参数名称指定对应列 &ndash;&gt;-->
+<!--            <idArg name="pwd" column="pwd" />-->
+<!--            &lt;!&ndash; 按参数顺序指定对应列 &ndash;&gt;-->
+<!--            <arg resultMap="usr" />-->
+<!--        </constructor>-->
+        <result column="usr" property="usr" />
+        <!--
+            property：指定对于的属性名称
+
+            ofType：指定集合储存的元素类型
+            javaType：指定集合实例类型，如 list
+            resultMap：
+
+            column：指定执行 select 时的参数，支持表达式，如 column="{ param1 = column, param2 = column2 }"，
+                    其中 param1 为嵌套查询时对于字段的参数名
+            select：通过嵌套查询的方式，加载并装配值，例如 select="selectByCity"，在装配 address 属性时，
+                    将会把 column 对应列的数据，作为参数传到 selectByCity 中去执行
+
+            notNullColumn：如果指定列（多个可用 , 隔开）为 null 时，则不创建对应的对象
+                    例如在该案例中，如果 city 字段为null，那么 address 这个 List 将不会创建任何元素，不管 province 是否不为null
+
+            columnPrefix：字段前缀，例如 select '广东' as `address.province`, '深圳' as `address.city`
+                    如果想对属性进行映射，则可以通过 columnPrefix="address." 指定前缀，内部属性只要 <result column="city" /> 即可
+
+            fetchType：拉取类型，控制是否是懒加载，如果未指定则默认全局配置，值：eager、lazy
+
+            autoMapping：是否自动映射
+
+            foreignColumn：外键id，可用于一对一或一对多时主表和副表的映射，如
+                    存在author和book，每个author可有多个book，那么配置如下
+                        <resultMap id="AuthorResultMap" type="Author">
+                            <id property="id" column="id"/>
+                            <result property="name" column="name"/>
+                            === 指定book的外键字段为 author_id，那么mybatis会根据主表id和author_id一致的，进行汇总处理
+                            <collection property="books" ofType="Book" foreignColumn="author_id">
+                                <id property="id" column="book_id"/>
+                                <result property="title" column="title"/>
+                            </collection>
+                        </resultMap>
+         -->
+        <collection property="address"
+                    ofType="xyz.me4cxy.dto.Address" javaType="list"
+                    column="{value = city, value2 = province}" select="selectByCity"
+                    notNullColumn="city"
+                    columnPrefix=""
+                    fetchType="eager"
+                    typeHandler="xyz.me4cxy.typehandler.CustomJsonTypeHandler"
+        >
+            <result property="city" column="city" />
+            <result property="province" column="province" />
+        </collection>
+        <discriminator column="pwd" javaType="string">
+            <case value="123">
+                <result property="pwd" column="pwd" />
+            </case>
+            <case value="222">
+                <result property="pwd" column="province" />
+            </case>
+        </discriminator>
+    </resultMap>
+
+    <!--
+        https://www.jianshu.com/p/05f643f27246
+
+        flushCache：执行语句后是否清除缓存（一级和二级），select默认为false
+        useCache：默认true，标识需要使用缓存
+
+        *** resultOrder：默认false。mybatis对 resultMap 中存在有 collection 或 association 时，会根据id标签声明的列对结果处理，这个时候默认会采用
+                类似 Map[id, resultMap] 的方式，将 id列 和 最终的主结果集resultMap 进行映射，然后每行在根据 id列 找结果集，找不到就初始化，找到就添加到collection或association
+                因此，默认情况下 id 有多少值，Map就会有多少个元素，这种清空在数据多时容易发生OOM。
+                    id   usr  role
+                    1    a    ADMIN
+                    2    b    USER
+                    1    a    USER
+                    == {
+                    ==   1: { usr: a, role: [ADMIN, USER] },
+                    ==   2: { usr: b, role: [USER] }
+                    == }
+                而通过设置 resultOrder="true" ，可以告诉 mybatis 查询结果的 id 都是有序的，因此如果在处理结果集时，id发生变化时标识该id的结果已经结束，那么便可以不用采用 Map[id, resultMap] 的
+                方式缓存每个 id 的结果集，而改成仅持有一个当前处理 id 对应的结果集
+                    id   usr  role
+                    1    a    ADMIN
+                    1    a    USER
+                    == { usr: a, role: [ADMIN, USER] }
+                    2    b    USER
+                    == { usr: b, role: [USER] }
+                通过减少对每个 id 和 结果集映射，来提高内存使用率，降低OOM发生的概率。
+
+
+    -->
+    <select id="selectByCity" resultType="xyz.me4cxy.dto.Address" flushCache="true" useCache="false">
+        SELECT #{value} city, #{value2} province
+        <if test="value1 == null"></if>
+    </select>
+
+    <sql id="selectCondition" databaseId="mysql">
+        WHERE 1 = ${test}
+    </sql>
+
+    <select id="selectOne" resultMap="User">
+        SELECT ('123' + 1) AS usr, 'abc' pwd, '广东省' `province`, '深圳' `city`, '${_databaseId}' db
+        <include refid="selectCondition">
+            <property name="test" value="1"/>
+        </include>
+    </select>
+
+    <select id="selectMultiToList" resultMap="User,usr">
+        SELECT ('123' + 1) AS usr, 'abc' pwd, '广东省' `province`, '深圳' `city`, '${_databaseId}' db;
+        SELECT 'test' as usr;
+    </select>
+
+<!--    &lt;!&ndash;-->
+<!--       resultSets：指定了每个结果集的名称-->
+<!--    &ndash;&gt;-->
+<!--    <resultMap id="User2" type="xyz.me4cxy.dto.User">-->
+<!--        <result column="usr" property="usr" />-->
+<!--        <collection property="address" resultSet="addr" column="usr_n" foreignColumn="usr">-->
+<!--            <result property="city" column="city" />-->
+<!--            <result property="province" column="province" />-->
+<!--        </collection>-->
+<!--    </resultMap>-->
+<!--    <select id="selectMultiToMap" resultMap="User2" resultSets="users,addr" resultType="map">-->
+<!--        SELECT ('123' + 1) AS usr, 'abc' pwd;-->
+<!--        SELECT '1231' usr_n, '广东省' `province`, '深圳' `city`;-->
+<!--    </select>-->
+
+    <insert id="insert">
+        <!-- selectKey：用于设置生成主键的方式
+            databaseId：对不同数据库的支持
+            resultType：返回的主键类型
+            keyProperty：主键生成后回显的属性
+            keyColumn：主键的字段名称
+            order：有两个值
+                BEFORE：在插入语句执行前查询
+                AFTER：在插入语句执行后查询，默认是AFTER
+            statementType：语句的执行类型，如 STATEMENT 静态SQL、PREPARED 预处理SQL、CALLABLE 回调SQL
+        -->
+        <selectKey databaseId="" resultType="" keyProperty="id" order="AFTER" statementType="PREPARED">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+        INSERT INTO user(usr, pwd) VALUES(#{usr}, #{pwd})
+    </insert>
+
+</mapper>

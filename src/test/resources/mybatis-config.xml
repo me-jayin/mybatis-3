@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+<!--    <properties resource="/custom.properties">-->
+<!--        <property name="1" value="2"/>-->
+<!--    </properties>-->
+    <properties>
+        <property name="test" value="12"/>
+    </properties>
+
+    <settings>
+        <!--======= basic =======-->
+        <!-- * 日志实现类，可指定Mapper的日志输出规则 -->
+        <setting name="logImpl" value="org.apache.ibatis.logging.slf4j.Slf4jImpl"/>
+<!--        &lt;!&ndash; 自定义全局日志前缀，可以在mybatis执行sql的日志时加上指定前缀，更方便的找到对应执行sql &ndash;&gt;-->
+<!--        <setting name="logPrefix" value="日志前缀-"/>-->
+<!--        &lt;!&ndash; * 是否进行驼峰转换 &ndash;&gt;-->
+<!--        <setting name="mapUnderscoreToCamelCase" value="true"/>-->
+<!--        &lt;!&ndash; * 是否开启全局的自增主键反显，默认false。开启时如果要使用则需要在mapper的 insert/update 中加上 keyProperty="" keyColumn="" &ndash;&gt;-->
+<!--        <setting name="useGeneratedKeys" value="false"/>-->
+<!--        &lt;!&ndash; * 如果值为 null 时，使用哪种JdbcType来处理null值，默认OTHER &ndash;&gt;-->
+<!--        <setting name="jdbcTypeForNull" value="OTHER"/>-->
+<!--        &lt;!&ndash; 执行器类型，有以下值：-->
+<!--            SIMPLE（默认）：每次执行都会创建一个新的预处理语句（PreparedStatement），适用于短生命周期的操作，如请求-响应模式-->
+<!--            REUSE：重用预处理语句，执行多次操作时会重复使用同一个预处理语句，适用于长生命周期的操作，如服务器环境下的持久连接-->
+<!--            BATCH：执行批量操作，将多个操作一次性发送给数据库执行，适用于大量的批量插入、更新或删除操作-->
+
+<!--            额外知识点：mybatis中实际上提供了以下Executor执行器-->
+<!--                SimpleExecutor：对应 SIMPLE-->
+<!--                ReuseExecutor：对应 REUSE-->
+<!--                BatchExecutor：对应 BATCH-->
+<!--                CachingExecutor：缓存执行器，该执行器实际上是一个装饰者，如果开启了缓存（cacheEnabled为true），-->
+<!--                                 则在根据 defaultExecutorType 创建执行器后，会对其进行包装-->
+<!--         &ndash;&gt;-->
+<!--        <setting name="defaultExecutorType" value="SIMPLE"/>-->
+<!--        &lt;!&ndash; * 是否在null值的情况下，还调用set方法，如果在set时为null值有特殊处理时请设置为true。默认false &ndash;&gt;-->
+<!--        <setting name="callSettersOnNulls" value="false"/>-->
+<!--        &lt;!&ndash; ** 在执行mapper方法时，是否使用实际参数名-->
+<!--            false（默认）：mybatis会自动生成参数名，如 param1、param2，也可以使用 @Param 指定参数名-->
+<!--            true：mybatis会从局部变量表中识别出方法名称-->
+<!--         &ndash;&gt;-->
+<!--        <setting name="useActualParamName" value="false"/>-->
+<!--        &lt;!&ndash; 查询结果为空行（查询结果所有列都为null）时是否返回实例对象，默认false &ndash;&gt;-->
+<!--        <setting name="returnInstanceForEmptyRow" value="false"/>-->
+<!--        &lt;!&ndash; 是否应该在预处理SQL语句时删除SQL中不必要的空白字符，可减少日志文件的大小，默认为true &ndash;&gt;-->
+<!--        <setting name="shrinkWhitespacesInSql" value="false"/>-->
+
+<!--        &lt;!&ndash;======= auto mapping =======&ndash;&gt;-->
+<!--        &lt;!&ndash; * 自动映射行为，指定查询出来的字段影射到属性的行为，用于控制全局的 autoMapping，有以下值：-->
+<!--            NONE：不进行映射，这种方式都需要用户通过 resultMap 指定映射规则-->
+<!--            PARTIAL（默认）：对 resultMap 中不存在 嵌套标签（如 association、collection）时将进行自动映射，也就是两种情况-->
+<!--                    1. 不存在 association、collection：对于未配置 result 的属性，也可以按字段名进行映射-->
+<!--                    2. 存在 association、collection：必须要求所有的属性，都通过 result 进行显示映射，mybatis将不会自动根据字段名称映射-->
+<!--            FULL：自动映射任何复杂的结果集（无论是否嵌套）：即使存在 association、collection，对于未配置 result 的属性（包括association、collection的属性）也会自动映射-->
+<!--         &ndash;&gt;-->
+<!--        <setting name="autoMappingBehavior" value="PARTIAL" />-->
+<!--        &lt;!&ndash; 设置遇到自动映射时未知字段的行为，有以下值：-->
+<!--            NONE（默认）：不做任何处理-->
+<!--            WARNING：警告，输出未知字段的日志-->
+<!--            FAILING：直接抛出异常-->
+<!--            自动映射的的定义：-->
+<!--                1.使用javaType-->
+<!--                2.resultMap无association、collection-->
+<!--                3.resultMap存在association、collection并且autoMappingBehavior为FULL-->
+<!--         &ndash;&gt;-->
+<!--        <setting name="autoMappingUnknownColumnBehavior" value="NONE"/>-->
+
+
+
+<!--        &lt;!&ndash;======= cache =======&ndash;&gt;-->
+<!--        &lt;!&ndash; * 是否开启全局缓存 &ndash;&gt;-->
+<!--        <setting name="cacheEnabled" value="true"/>-->
+<!--        &lt;!&ndash; 本地缓存域，有以下值：-->
+<!--            SESSION（默认）：按语句缓存，每次执行完一个 Mapper 语句后都会清除缓存-->
+<!--            STATEMENT：按SqlSession缓存，如果SqlSession没关闭，缓存就生效-->
+<!--            &ndash;&gt;-->
+<!--        <setting name="localCacheScope" value="SESSION"/>-->
+
+
+
+<!--        &lt;!&ndash;======= lazy loading =======&ndash;&gt;-->
+<!--        &lt;!&ndash; * 是否开启全局的延迟加载，默认false &ndash;&gt;-->
+<!--        <setting name="lazyLoadingEnabled" value="false"/>-->
+<!--        &lt;!&ndash; 在开启延迟加载时，是否在访问任何一个属性都会加载所有的懒加载属性。默认为false，表示只会加载访问的那个属性 &ndash;&gt;-->
+<!--        <setting name="aggressiveLazyLoading" value="false"/>-->
+<!--        &lt;!&ndash; 触发懒加载的方法名，也就是说调用以下方法前，会先触发懒加载 &ndash;&gt;-->
+<!--        <setting name="lazyLoadTriggerMethods" value="equals,clone,hashCode,toString"/>-->
+
+
+
+<!--        &lt;!&ndash;======= execute behavior =======&ndash;&gt;-->
+<!--        &lt;!&ndash; 全局 Statement 执行超时实际，默认为null，表示不限制。也可在 mapper 中配置 timeout 某个语句的超时时间 &ndash;&gt;-->
+<!--        <setting name="defaultStatementTimeout" value="1000"/>-->
+<!--        &lt;!&ndash; 查询操作的默认获取数据的数量，默认为null，表示无限制。也可在 mapper 中配置 fetchSize 指定某个语句的拉去记录数 &ndash;&gt;-->
+<!--        <setting name="defaultFetchSize" value="100"/>-->
+<!--        &lt;!&ndash; 默认结果集类型，有以下值：-->
+<!--            DEFAULT（默认）：由mybatis自行控制结果集类型-->
+<!--            FORWARD_ONLY：只能向前遍历的结果集-->
+<!--            SCROLL_INSENSITIVE：可滚动的结果集，但是对数据库变化不敏感-->
+<!--            SCROLL_SENSITIVE：可滚动的结果集，对数据库变化敏感-->
+<!--         &ndash;&gt;-->
+<!--        <setting name="defaultResultSetType" value="DEFAULT"/>-->
+<!--        &lt;!&ndash;(不常用) 是否允许单个语句返回多结果集（需要数据库驱动的支持），默认true &ndash;&gt;-->
+<!--        <setting name="multipleResultSetsEnabled" value="true"/>-->
+<!--        &lt;!&ndash;(不常用，不建议修改) 是否使用columnLabel作为映射字段关键字，默认true-->
+<!--            在mysql时，columnLabel为别名，columnName为字段原名称-->
+<!--            而oracle中，columnLabel和columnName都为最终字段别名（有别名为别名，没别名为字段原名称）-->
+<!--         &ndash;&gt;-->
+<!--        <setting name="useColumnLabel" value="true"/>-->
+
+
+
+<!--        &lt;!&ndash;======= result process FIXME =======&ndash;&gt;-->
+<!--        <setting name="safeRowBoundsEnabled" value="false"/>-->
+<!--        <setting name="safeResultHandlerEnabled" value="true"/>-->
+
+
+
+<!--        &lt;!&ndash;======= extend =======&ndash;&gt;-->
+<!--        &lt;!&ndash; 代理工厂实现类，用于处理懒加载的，需要实现接口org.apache.ibatis.executor.loader.ProxyFactory &ndash;&gt;-->
+<!--        <setting name="proxyFactory" value="org.apache.ibatis.executor.loader.javassist.JavassistProxyFactory" />-->
+<!--        &lt;!&ndash; 虚拟文件系统实现类，多个可用 , 隔开 &ndash;&gt;-->
+<!--        <setting name="vfsImpl" value="org.apache.ibatis.io.DefaultVFS,org.mybatis.spring.boot.autoconfigure.SpringBootVFS"/>-->
+<!--        &lt;!&ndash; 脚本语言解析驱动，必须实现接口 org.apache.ibatis.scripting.LanguageDriver &ndash;&gt;-->
+<!--        <setting name="defaultScriptingLanguage" value="org.apache.ibatis.scripting.xmltags.XMLLanguageDriver"/>-->
+<!--        &lt;!&ndash; 默认的枚举类型处理器，必须实现接口 org.apache.ibatis.type.TypeHandler &ndash;&gt;-->
+<!--        <setting name="defaultEnumTypeHandler" value="org.apache.ibatis.type.EnumTypeHandler"/>-->
+<!--        &lt;!&ndash; 指定一个提供Configuration实例的类。这个被返回的Configuration实例用来加载被反序列化对象的懒加载属性值。这个类必须包含一个静态方法-->
+<!--            static Configuration getConfiguration()-->
+<!--            默认不设置-->
+<!--        &ndash;&gt;-->
+<!--        <setting name="configurationFactory" value="xyz.me4cxy.factory.CustomerConfigurationFactory"/>-->
+<!--        &lt;!&ndash; 指定默认sql提供类，详情可看 org.apache.ibatis.annotations.SelectProvider 的注释示例 &ndash;&gt;-->
+<!--        <setting name="defaultSqlProviderType" value="xyz.me4cxy.factory.CustomerSqlProvider"/>-->
+    </settings>
+
+<!--    <typeAliases>-->
+<!--        &lt;!&ndash; 给 xyz.me4cxy.dto.Address 指定别名 Addr &ndash;&gt;-->
+<!--        <typeAlias type="xyz.me4cxy.dto.Address" alias="Addr"/>-->
+<!--        &lt;!&ndash; 指定包，为包下所有的类注册别名，别名为 类名 &ndash;&gt;-->
+<!--        <package name="xyz.me4cxy"/>-->
+<!--    </typeAliases>-->
+
+<!--    <typeHandlers>-->
+<!--        &lt;!&ndash; 配置自定义的类型处理器，在 jdbc 数据类型为 varchar 时，将会使用该类型处理器转换成 User 类型的数据 &ndash;&gt;-->
+<!--        <typeHandler handler="xyz.me4cxy.typehandler.CustomJsonTypeHandler"-->
+<!--                     javaType="xyz.me4cxy.dto.User"-->
+<!--                     jdbcType="VARCHAR" />-->
+<!--        &lt;!&ndash; 将该包下的所有类型处理器进行注册 &ndash;&gt;-->
+<!--&lt;!&ndash;        <package name="xyz.me4cxy.typehandler"/>&ndash;&gt;-->
+<!--    </typeHandlers>-->
+
+<!--    &lt;!&ndash; 设置对象工厂，mybatis会通过对象工厂创建指定类型的对象 &ndash;&gt;-->
+<!--    <objectFactory type="xyz.me4cxy.objectfactory.CustomObjectFactory">-->
+<!--        <property name="log" value="true"/>-->
+<!--    </objectFactory>-->
+<!--    &lt;!&ndash; 设置对象包装工厂，mybatis 在 MetaObject 会进行包装，便可通过 ObjectWrapperFactory 处理 &ndash;&gt;-->
+<!--    <objectWrapperFactory type="xyz.me4cxy.objectfactory.CustomWrapperObjectFactory"/>-->
+<!--    &lt;!&ndash; 设置反射工厂，在 mybatis 对属性、类实例等操作时，都会通过 反射工厂 来处理，因此可以通过实现该接口自定义反射逻辑 &ndash;&gt;-->
+<!--    <reflectorFactory type="xyz.me4cxy.reflectorfactory.CustomReflectorFactory"/>-->
+
+<!--    <plugins>-->
+<!--        &lt;!&ndash; 配置拦截器，并添加自定义配置值 &ndash;&gt;-->
+<!--        <plugin interceptor="xyz.me4cxy.intercetor.DefaultInterceptor">-->
+<!--            <property name="usr" value="123456"/>-->
+<!--        </plugin>-->
+<!--    </plugins>-->
+
+    <environments default="dev">
+        <environment id="dev">
+            <!-- 指定事务管理器类型，预制类型：JDBC、MANAGED，如果有外部事务管理容器，可以设置为MANAGED。
+                也可以自己实现 org.apache.ibatis.transaction.TransactionFactory 接口，自定义事务管理器
+             -->
+            <transactionManager type="JDBC">
+                <property name="name" value="value"/>
+            </transactionManager>
+            <!-- 配置数据源，mybatis预留的type有以下类型：JNDI、POOLED、UNPOOLED；
+                也可以执行实现 org.apache.ibatis.datasource.DataSourceFactory 接口，自定义数据源工厂 -->
+            <dataSource type="POOLED">
+                <!-- 初始化数据源信息 -->
+                <property name="driver" value="com.mysql.cj.jdbc.Driver"/>
+                <property name="url" value="jdbc:mysql://localhost:3306/my_sale?useUnicode=true&amp;characterEncoding=UTF-8&amp;useSSL=false&amp;serverTimezone=Asia/Shanghai&amp;allowMultiQueries=true"/>
+                <property name="username" value="root"/>
+                <property name="password" value="123456"/>
+            </dataSource>
+        </environment>
+    </environments>
+
+    <!-- 数据库id提供者，用于获取数据库类型，在 mapper.xml 中可用 databaseId 来区分不同数据库的语句
+        预制类型：DB_VENDOR（或 VENDOR）
+
+        在 mapper 中配置不同的 databaseId 来支持不同数据库
+        <mapper namespace="xyz.me4cxy.mapper.TestMapper">
+            <select id="findById" databaseId="mysql">
+                # 用于mysql的
+            </select>
+            <select id="findById" databaseId="oracle">
+                # 用于oracle的
+            </select>
+        </mapper>
+     -->
+    <databaseIdProvider type="VENDOR">
+        <!-- 将MySQL的数据库标识定义为 mysql -->
+        <property name="MySQL" value="mysql"/>
+        <property name="Oracle" value="oracle"/>
+    </databaseIdProvider>
+
+    <mappers>
+<!--        &lt;!&ndash; 通过类注册 mapper，要求 mapper.xml 的路径和全路径名一致 &ndash;&gt;-->
+<!--        <mapper class="xyz.me4cxy.mapper.TestMapper" />-->
+        <!-- 通过 mapper.xml 的路径来注册 mapper，该种方式会自己从 mapper.xml 中找到对于的 Mapper 类 -->
+        <mapper resource="mapper/TestMapper.xml" />
+<!--        &lt;!&ndash; 注册指定包下的 mapper 类 &ndash;&gt;-->
+<!--        <package name="xyz.me4cxy.mapper"/>-->
+    </mappers>
+</configuration>
