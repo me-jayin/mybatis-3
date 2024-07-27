@@ -15,17 +15,18 @@
  */
 package org.apache.ibatis.transaction.managed;
 
-import java.sql.Connection;
-import java.util.Properties;
-
-import javax.sql.DataSource;
-
 import org.apache.ibatis.session.TransactionIsolationLevel;
 import org.apache.ibatis.transaction.Transaction;
 import org.apache.ibatis.transaction.TransactionFactory;
 
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.util.Properties;
+
 /**
  * Creates {@link ManagedTransaction} instances.
+ * 默认的管理事务工厂，提供创建 ManagedTransaction（受管理的事务） 事务的创建
+ * ManagedTransaction 会将事务的管理都交给外部负责，内部不做任何处理
  *
  * @author Clinton Begin
  *
@@ -55,6 +56,8 @@ public class ManagedTransactionFactory implements TransactionFactory {
     // Silently ignores autocommit and isolation level, as managed transactions are entirely
     // controlled by an external manager. It's silently ignored so that
     // code remains portable between managed and unmanaged configurations.
+    // 静默地忽略自动提交和隔离级别，因为托管事务完全由外部管理器控制。
+    // 它被静默地忽略，以便代码在托管和非托管配置之间保持可移植性。
     return new ManagedTransaction(ds, level, closeConnection);
   }
 }

@@ -15,12 +15,14 @@
  */
 package org.apache.ibatis.scripting.xmltags;
 
+import org.apache.ibatis.session.Configuration;
+
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.ibatis.session.Configuration;
-
 /**
+ * where 标签，由于 where 只是帮忙增加where在sql前面，并剔除条件中的前缀 AND、OR，
+ * 因此 where 实际上就是一个 特殊的trim 标签，所以这里直接继承 TrimSqlNode 类
  * @author Clinton Begin
  */
 public class WhereSqlNode extends TrimSqlNode {

@@ -15,9 +15,6 @@
  */
 package org.apache.ibatis.executor.keygen;
 
-import java.sql.Statement;
-import java.util.List;
-
 import org.apache.ibatis.executor.Executor;
 import org.apache.ibatis.executor.ExecutorException;
 import org.apache.ibatis.mapping.MappedStatement;
@@ -26,13 +23,18 @@ import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.RowBounds;
 
+import java.sql.Statement;
+import java.util.List;
+
 /**
+ * 基于select的自定义key generator
  * @author Clinton Begin
  * @author Jeff Butler
  */
 public class SelectKeyGenerator implements KeyGenerator {
 
   public static final String SELECT_KEY_SUFFIX = "!selectKey";
+  // 用于保证只执行一次
   private final boolean executeBefore;
   private final MappedStatement keyStatement;
 
@@ -63,6 +65,7 @@ public class SelectKeyGenerator implements KeyGenerator {
         final MetaObject metaParam = configuration.newMetaObject(parameter);
         // Do not close keyExecutor.
         // The transaction will be closed by parent executor.
+        // 直接使用查询来获取 key 属性
         Executor keyExecutor = configuration.newExecutor(executor.getTransaction(), ExecutorType.SIMPLE);
         List<Object> values = keyExecutor.query(keyStatement, parameter, RowBounds.DEFAULT, Executor.NO_RESULT_HANDLER);
         if (values.isEmpty()) {
@@ -92,9 +95,16 @@ public class SelectKeyGenerator implements KeyGenerator {
     }
   }
 
+  /**
+   * 将指定的多个列回显到多个 properties 中
+   * @param keyProperties
+   * @param metaParam
+   * @param metaResult
+   */
   private void handleMultipleProperties(String[] keyProperties, MetaObject metaParam, MetaObject metaResult) {
     String[] keyColumns = keyStatement.getKeyColumns();
 
+    // 如果未指定column，则按顺序回显
     if (keyColumns == null || keyColumns.length == 0) {
       // no key columns specified, just use the property names
       for (String keyProperty : keyProperties) {
@@ -105,12 +115,19 @@ public class SelectKeyGenerator implements KeyGenerator {
         throw new ExecutorException(
             "If SelectKey has key columns, the number must match the number of key properties.");
       }
+      // 否则直接按字段名称来回显
       for (int i = 0; i < keyProperties.length; i++) {
         setValue(metaParam, keyProperties[i], metaResult.getValue(keyColumns[i]));
       }
     }
   }
 
+  /**
+   * 往入参中的指定属性设置值（即keyGenerator的回显）
+   * @param metaParam
+   * @param property
+   * @param value
+   */
   private void setValue(MetaObject metaParam, String property, Object value) {
     if (!metaParam.hasSetter(property)) {
       throw new ExecutorException("No setter found for the keyProperty '" + property + "' in "

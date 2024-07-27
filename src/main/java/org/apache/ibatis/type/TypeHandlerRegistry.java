@@ -225,6 +225,10 @@ public final class TypeHandlerRegistry {
   }
 
   @SuppressWarnings("unchecked")
+  /**
+   * 获取指定类型、jdbcType 关联的 TypeHandler
+   * 如果通过类型+jdbcType找不到 TypeHandler 时，会尝试使用 类型+null 获取默认的 TypeHandler
+   */
   private <T> TypeHandler<T> getTypeHandler(Type type, JdbcType jdbcType) {
     if (ParamMap.class.equals(type)) {
       return null;

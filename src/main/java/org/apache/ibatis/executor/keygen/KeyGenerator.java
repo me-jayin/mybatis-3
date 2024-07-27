@@ -15,18 +15,32 @@
  */
 package org.apache.ibatis.executor.keygen;
 
-import java.sql.Statement;
-
 import org.apache.ibatis.executor.Executor;
 import org.apache.ibatis.mapping.MappedStatement;
+
+import java.sql.Statement;
 
 /**
  * @author Clinton Begin
  */
 public interface KeyGenerator {
 
+  /**
+   *  auto-generated keys 的前置准备
+   * @param executor
+   * @param ms
+   * @param stmt
+   * @param parameter
+   */
   void processBefore(Executor executor, MappedStatement ms, Statement stmt, Object parameter);
 
+  /**
+   *  auto-generated keys 的后置处理
+   * @param executor
+   * @param ms
+   * @param stmt
+   * @param parameter
+   */
   void processAfter(Executor executor, MappedStatement ms, Statement stmt, Object parameter);
 
 }

@@ -42,6 +42,24 @@ import java.lang.annotation.Target;
  * }
  * </pre>
  *
+ * <pre>
+ *     @SelectProvider(type = UserSqlBuilder.class, method = "buildGetUsersByName")
+ *     List<User> getUsersByName(String name);
+ *
+ *     class UserSqlBuilder {
+ *         public static String buildGetUsersByName(final String name) {
+ *             return new SQL(){{
+ *                 SELECT("*");
+ *                 FROM("users");
+ *                 if (name != null) {
+ *                     WHERE("name like #{value} || '%'");
+ *                 }
+ *                 ORDER_BY("id");
+ *             }}.toString();
+ *         }
+ *     }
+ * </pre>
+ *
  * @author Clinton Begin
  */
 @Documented
@@ -54,10 +72,8 @@ public @interface SelectProvider {
    * Specify a type that implements an SQL provider method.
    *
    * @return a type that implements an SQL provider method
-   *
-   * @since 3.5.2
-   *
    * @see #type()
+   * @since 3.5.2
    */
   Class<?> value() default void.class;
 
@@ -67,7 +83,6 @@ public @interface SelectProvider {
    * This attribute is alias of {@link #value()}.
    *
    * @return a type that implements an SQL provider method
-   *
    * @see #value()
    */
   Class<?> type() default void.class;

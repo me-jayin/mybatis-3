@@ -15,8 +15,6 @@
  */
 package org.apache.ibatis.scripting.defaults;
 
-import java.util.HashMap;
-
 import org.apache.ibatis.builder.SqlSourceBuilder;
 import org.apache.ibatis.mapping.BoundSql;
 import org.apache.ibatis.mapping.SqlSource;
@@ -25,36 +23,43 @@ import org.apache.ibatis.scripting.xmltags.DynamicSqlSource;
 import org.apache.ibatis.scripting.xmltags.SqlNode;
 import org.apache.ibatis.session.Configuration;
 
+import java.util.HashMap;
+
 /**
  * Static SqlSource. It is faster than {@link DynamicSqlSource} because mappings are calculated during startup.
- *
- * @since 3.2.0
- *
- * @author Eduardo Macarron
+ * 静态的 SqlSource，比 DynamicSqlSource 要更快，原因是静态SqlSource的映射顺序固定，因此其 ParameterMapping 是在启动过程中就计算好了
  */
 public class RawSqlSource implements SqlSource {
 
-  private final SqlSource sqlSource;
+    private final SqlSource sqlSource;
 
-  public RawSqlSource(Configuration configuration, SqlNode rootSqlNode, Class<?> parameterType) {
-    this(configuration, getSql(configuration, rootSqlNode), parameterType);
-  }
+    public RawSqlSource(Configuration configuration, SqlNode rootSqlNode, Class<?> parameterType) {
+        this(configuration, getSql(configuration, rootSqlNode), parameterType);
+    }
 
-  public RawSqlSource(Configuration configuration, String sql, Class<?> parameterType) {
-    SqlSourceBuilder sqlSourceParser = new SqlSourceBuilder(configuration);
-    Class<?> clazz = parameterType == null ? Object.class : parameterType;
-    sqlSource = sqlSourceParser.parse(sql, clazz, new HashMap<>());
-  }
+    public RawSqlSource(Configuration configuration, String sql, Class<?> parameterType) {
+        // SqlSource构建者，在创建 RawSqlSource 时就先计算并构建一个静态SqlSource
+        SqlSourceBuilder sqlSourceParser = new SqlSourceBuilder(configuration);
+        Class<?> clazz = parameterType == null ? Object.class : parameterType;
+        // 解析完成，得到最后的 SqlSource
+        sqlSource = sqlSourceParser.parse(sql, clazz, new HashMap<>());
+    }
 
-  private static String getSql(Configuration configuration, SqlNode rootSqlNode) {
-    DynamicContext context = new DynamicContext(configuration, null);
-    rootSqlNode.apply(context);
-    return context.getSql();
-  }
+    /**
+     * 基于 SqlNode（SQL的标签），获取到对应的 SQL 语句
+     * @param configuration
+     * @param rootSqlNode
+     * @return
+     */
+    private static String getSql(Configuration configuration, SqlNode rootSqlNode) {
+        DynamicContext context = new DynamicContext(configuration, null);
+        rootSqlNode.apply(context);
+        return context.getSql();
+    }
 
-  @Override
-  public BoundSql getBoundSql(Object parameterObject) {
-    return sqlSource.getBoundSql(parameterObject);
-  }
+    @Override
+    public BoundSql getBoundSql(Object parameterObject) {
+        return sqlSource.getBoundSql(parameterObject);
+    }
 
 }

@@ -15,35 +15,49 @@
  */
 package org.apache.ibatis.executor.statement;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.List;
-
 import org.apache.ibatis.cursor.Cursor;
 import org.apache.ibatis.executor.parameter.ParameterHandler;
 import org.apache.ibatis.mapping.BoundSql;
 import org.apache.ibatis.session.ResultHandler;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.List;
+
 /**
+ * Statement 对象处理器，能够构建一个 sql 的 Statement 对象，并且提供对 Statement 的一些操作方法
+ *
  * @author Clinton Begin
  */
 public interface StatementHandler {
 
-  Statement prepare(Connection connection, Integer transactionTimeout) throws SQLException;
+    /**
+     * statement预准备，该方法会创建一个 statement 对象
+     * @param connection
+     * @param transactionTimeout
+     * @return
+     * @throws SQLException
+     */
+    Statement prepare(Connection connection, Integer transactionTimeout) throws SQLException;
 
-  void parameterize(Statement statement) throws SQLException;
+    /**
+     * 参数化处理，该方法会按需要往statement中填充参数
+     * @param statement
+     * @throws SQLException
+     */
+    void parameterize(Statement statement) throws SQLException;
 
-  void batch(Statement statement) throws SQLException;
+    void batch(Statement statement) throws SQLException;
 
-  int update(Statement statement) throws SQLException;
+    int update(Statement statement) throws SQLException;
 
-  <E> List<E> query(Statement statement, ResultHandler resultHandler) throws SQLException;
+    <E> List<E> query(Statement statement, ResultHandler resultHandler) throws SQLException;
 
-  <E> Cursor<E> queryCursor(Statement statement) throws SQLException;
+    <E> Cursor<E> queryCursor(Statement statement) throws SQLException;
 
-  BoundSql getBoundSql();
+    BoundSql getBoundSql();
 
-  ParameterHandler getParameterHandler();
+    ParameterHandler getParameterHandler();
 
 }

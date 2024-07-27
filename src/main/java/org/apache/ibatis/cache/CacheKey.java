@@ -15,14 +15,16 @@
  */
 package org.apache.ibatis.cache;
 
+import org.apache.ibatis.reflection.ArrayUtil;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringJoiner;
 
-import org.apache.ibatis.reflection.ArrayUtil;
-
 /**
+ * 缓存key，在缓存时，会基于每个关键对象来进行hash运算（类似布隆过滤器），然后将关键对象存储到缓存元素集合中
+ * （hash运算是为了快速校验，避免每次都要遍历元素来判断一致性）
  * @author Clinton Begin
  */
 public class CacheKey implements Cloneable, Serializable {
@@ -100,10 +102,12 @@ public class CacheKey implements Cloneable, Serializable {
 
     final CacheKey cacheKey = (CacheKey) object;
 
+    // hashcode、cound、checksum不一样则说明内容一定不一样
     if ((hashcode != cacheKey.hashcode) || (checksum != cacheKey.checksum) || (count != cacheKey.count)) {
       return false;
     }
 
+    // 遍历updateList完全校验一致性
     for (int i = 0; i < updateList.size(); i++) {
       Object thisObject = updateList.get(i);
       Object thatObject = cacheKey.updateList.get(i);

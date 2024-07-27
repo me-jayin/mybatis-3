@@ -15,12 +15,12 @@
  */
 package org.apache.ibatis.mapping;
 
-import java.sql.ResultSet;
-
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.TypeHandler;
 import org.apache.ibatis.type.TypeHandlerRegistry;
+
+import java.sql.ResultSet;
 
 /**
  * @author Clinton Begin
@@ -118,6 +118,9 @@ public class ParameterMapping {
       }
     }
 
+    /**
+     * 如果未指定 TypeHandler 时，则使用 javaType + jdbcType 来获取已注册到 TypeHandlerRegistry 中的通用 TypeHandler
+     */
     private void resolveTypeHandler() {
       if (parameterMapping.typeHandler == null && parameterMapping.javaType != null) {
         Configuration configuration = parameterMapping.configuration;

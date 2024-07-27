@@ -30,7 +30,8 @@ import org.apache.ibatis.type.TypeHandler;
 import java.util.*;
 
 /**
- * mapper建造协助类，提供命名空间校验、缓存引用等处理
+ * mapper建造协助类，提供命名空间校验、缓存引用等处理。
+ * 每个 Mapper 都会构建一个该类对象，因此如果是 开启了二级缓存，那么 mapper 里面会共享 Cache
  *
  * @author Clinton Begin
  */
@@ -96,7 +97,7 @@ public class MapperBuilderAssistant extends BaseBuilder {
     }
 
     /**
-     * 登记缓存引用关系
+     * 登记缓存引用关系，并获取对应的 Cache 对象
      * @param namespace
      * @return
      */
@@ -262,12 +263,37 @@ public class MapperBuilderAssistant extends BaseBuilder {
         return new Discriminator.Builder(configuration, resultMapping, namespaceDiscriminatorMap).build();
     }
 
+    /**
+     * 添加 MappedStatement ，即 insert、update、select、delete 标签解析结果
+     * @param id
+     * @param sqlSource SqlSource
+     * @param statementType Statement类型，如 STATEMENT, PREPARED, CALLABLE
+     * @param sqlCommandType sql 语句类型，如INSERT、UPDATE等
+     * @param fetchSize 拉取数据数量
+     * @param timeout 执行超时时长
+     * @param parameterMap 引用的 parameterMap 的id
+     * @param parameterType 入参类型
+     * @param resultMap resultMap id
+     * @param resultType 返回类型
+     * @param resultSetType
+     * @param flushCache 是否清除缓存
+     * @param useCache 是否使用缓存
+     * @param resultOrdered 结果是否已经进行排序
+     * @param keyGenerator key生成器
+     * @param keyProperty 主键对应的属性
+     * @param keyColumn 主键取值的字段名
+     * @param databaseId 生效的数据库标识
+     * @param lang LanguageDriver，分为 XML（动态）、RAW（静态）
+     * @param resultSets
+     * @param dirtySelect
+     * @return
+     */
     public MappedStatement addMappedStatement(String id, SqlSource sqlSource, StatementType statementType,
                                               SqlCommandType sqlCommandType, Integer fetchSize, Integer timeout, String parameterMap, Class<?> parameterType,
                                               String resultMap, Class<?> resultType, ResultSetType resultSetType, boolean flushCache, boolean useCache,
                                               boolean resultOrdered, KeyGenerator keyGenerator, String keyProperty, String keyColumn, String databaseId,
                                               LanguageDriver lang, String resultSets, boolean dirtySelect) {
-
+        // 如果 引用的缓存 还为初始化好，则直接将当前操作挂到队列中
         if (unresolvedCacheRef) {
             throw new IncompleteElementException("Cache-ref not yet resolved");
         }
@@ -280,12 +306,13 @@ public class MapperBuilderAssistant extends BaseBuilder {
                 .resultOrdered(resultOrdered).resultSets(resultSets)
                 .resultMaps(getStatementResultMaps(resultMap, resultType, id)).resultSetType(resultSetType)
                 .flushCacheRequired(flushCache).useCache(useCache).cache(currentCache).dirtySelect(dirtySelect);
-
+        // 根据id
         ParameterMap statementParameterMap = getStatementParameterMap(parameterMap, parameterType, id);
         if (statementParameterMap != null) {
             statementBuilder.parameterMap(statementParameterMap);
         }
 
+        // 构建并注册 MappedStatement 对象
         MappedStatement statement = statementBuilder.build();
         configuration.addMappedStatement(statement);
         return statement;
@@ -339,17 +366,24 @@ public class MapperBuilderAssistant extends BaseBuilder {
         return value == null ? defaultValue : value;
     }
 
+    /**
+     * 获取 ParameterMap 对象
+     * @param parameterMapName
+     * @param parameterTypeClass
+     * @param statementId
+     * @return
+     */
     private ParameterMap getStatementParameterMap(String parameterMapName, Class<?> parameterTypeClass,
                                                   String statementId) {
         parameterMapName = applyCurrentNamespace(parameterMapName, true);
         ParameterMap parameterMap = null;
-        if (parameterMapName != null) {
+        if (parameterMapName != null) { // 如果指定 parameterMap id 则直接获取
             try {
                 parameterMap = configuration.getParameterMap(parameterMapName);
             } catch (IllegalArgumentException e) {
                 throw new IncompleteElementException("Could not find parameter map " + parameterMapName, e);
             }
-        } else if (parameterTypeClass != null) {
+        } else if (parameterTypeClass != null) { // 如果指定了参数类型，则通过参数类型构建內部的 ParameterType
             List<ParameterMapping> parameterMappings = new ArrayList<>();
             parameterMap = new ParameterMap.Builder(configuration, statementId + "-Inline", parameterTypeClass,
                     parameterMappings).build();
@@ -357,14 +391,23 @@ public class MapperBuilderAssistant extends BaseBuilder {
         return parameterMap;
     }
 
+    /**
+     * 获取 statement 响应 ResultMap ，由于mybatis能够支持多结果集，因此 resultMap 可以使用','分隔，用于描述每个结果集的 resultMap
+     * @param resultMap
+     * @param resultType
+     * @param statementId
+     * @return
+     */
     private List<ResultMap> getStatementResultMaps(String resultMap, Class<?> resultType, String statementId) {
         resultMap = applyCurrentNamespace(resultMap, true);
 
         List<ResultMap> resultMaps = new ArrayList<>();
         if (resultMap != null) {
+            // 切割
             String[] resultMapNames = resultMap.split(",");
             for (String resultMapName : resultMapNames) {
                 try {
+                    // 从 confugiration 中获取 resultMap
                     resultMaps.add(configuration.getResultMap(resultMapName.trim()));
                 } catch (IllegalArgumentException e) {
                     throw new IncompleteElementException(
@@ -372,6 +415,7 @@ public class MapperBuilderAssistant extends BaseBuilder {
                 }
             }
         } else if (resultType != null) {
+            // 如果使用 resultType 来作为返回值，则创建一个内部 ReseultMap
             ResultMap inlineResultMap = new ResultMap.Builder(configuration, statementId + "-Inline", resultType,
                     new ArrayList<>(), null).build();
             resultMaps.add(inlineResultMap);
@@ -404,6 +448,7 @@ public class MapperBuilderAssistant extends BaseBuilder {
         Class<?> javaTypeClass = resolveResultJavaType(resultType, property, javaType);
         TypeHandler<?> typeHandlerInstance = resolveTypeHandler(javaTypeClass, typeHandler);
         List<ResultMapping> composites;
+        // 处理嵌套查询操作
         if ((nestedSelect == null || nestedSelect.isEmpty()) && (foreignColumn == null || foreignColumn.isEmpty())) {
             composites = Collections.emptyList();
         } else {
@@ -468,6 +513,12 @@ public class MapperBuilderAssistant extends BaseBuilder {
         return columns;
     }
 
+    /**
+     * 解析字段表达式，如嵌套查询时， column 可以使用表达式：{id=group_id,state=state}
+     * 对查询出来的结果字段名称进行重命名，如将 group_id 映射为 id
+     * @param columnName
+     * @return
+     */
     private List<ResultMapping> parseCompositeColumnName(String columnName) {
         List<ResultMapping> composites = new ArrayList<>();
         if (columnName != null && (columnName.indexOf('=') > -1 || columnName.indexOf(',') > -1)) {

@@ -24,6 +24,7 @@ public class MapUtil {
   /**
    * A temporary workaround for Java 8 specific performance issue JDK-8161372 .<br>
    * This class should be removed once we drop Java 8 support.
+   * 如果使用 ConcurrentHashMap 时， computeIfAbsent 可能会出现死锁，导致出现问题，因此在这里对方法进行二次处理
    *
    * @see <a href=
    *      "https://bugs.openjdk.java.net/browse/JDK-8161372">https://bugs.openjdk.java.net/browse/JDK-8161372</a>

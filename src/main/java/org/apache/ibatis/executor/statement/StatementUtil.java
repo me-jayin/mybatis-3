@@ -32,6 +32,7 @@ public class StatementUtil {
   }
 
   /**
+   * 如果事务超时时长不为空，并且 未设置过查询超时时长、或事务超时时长小于查询超时时长 时，则将传入的事务超时时长进行应用
    * Apply a transaction timeout.
    * <p>
    * Update a query timeout to apply a transaction timeout.

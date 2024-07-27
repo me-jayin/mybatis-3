@@ -87,14 +87,17 @@ public class ResultMap {
             resultMap.constructorResultMappings = new ArrayList<>();
             resultMap.propertyResultMappings = new ArrayList<>();
             final List<String> constructorArgNames = new ArrayList<>();
+            // 遍历 ResultMapping
             for (ResultMapping resultMapping : resultMap.resultMappings) {
                 resultMap.hasNestedQueries = resultMap.hasNestedQueries || resultMapping.getNestedQueryId() != null;
                 resultMap.hasNestedResultMaps = resultMap.hasNestedResultMaps
                         || resultMapping.getNestedResultMapId() != null && resultMapping.getResultSet() == null;
                 final String column = resultMapping.getColumn();
+                // 将字段需要映射的 column 记录起来
                 if (column != null) {
                     resultMap.mappedColumns.add(column.toUpperCase(Locale.ENGLISH));
                 } else if (resultMapping.isCompositeResult()) {
+                    // 如果结果集是嵌套聚合结果集，则将嵌套的字段名也加记录
                     for (ResultMapping compositeResultMapping : resultMapping.getComposites()) {
                         final String compositeColumn = compositeResultMapping.getColumn();
                         if (compositeColumn != null) {
@@ -102,32 +105,39 @@ public class ResultMap {
                         }
                     }
                 }
+                // 获取需要填充的属性，并记录起来
                 final String property = resultMapping.getProperty();
                 if (property != null) {
                     resultMap.mappedProperties.add(property);
                 }
+                // 如果是 构造器 属性映射，则记录构造器映射即构造器参数名
                 if (resultMapping.getFlags().contains(ResultFlag.CONSTRUCTOR)) {
                     resultMap.constructorResultMappings.add(resultMapping);
                     if (resultMapping.getProperty() != null) {
                         constructorArgNames.add(resultMapping.getProperty());
                     }
                 } else {
+                    // 否则加入属性映射中
                     resultMap.propertyResultMappings.add(resultMapping);
                 }
+                // 如果是id字段则加入id映射集
                 if (resultMapping.getFlags().contains(ResultFlag.ID)) {
                     resultMap.idResultMappings.add(resultMapping);
                 }
             }
+            // 如果未特殊指定 id 结果，则将所有 result 加入其中
             if (resultMap.idResultMappings.isEmpty()) {
                 resultMap.idResultMappings.addAll(resultMap.resultMappings);
             }
             if (!constructorArgNames.isEmpty()) {
+                // 对入参进行校验
                 final List<String> actualArgNames = argNamesOfMatchingConstructor(constructorArgNames);
                 if (actualArgNames == null) {
                     throw new BuilderException("Error in result map '" + resultMap.id + "'. Failed to find a constructor in '"
                             + resultMap.getType().getName() + "' with arg names " + constructorArgNames
                             + ". Note that 'javaType' is required when there is no writable property with the same name ('name' is optional, BTW). There might be more info in debug log.");
                 }
+                // 将参数ResultMapping按实际参数顺序排序
                 resultMap.constructorResultMappings.sort((o1, o2) -> {
                     int paramIdx1 = actualArgNames.indexOf(o1.getProperty());
                     int paramIdx2 = actualArgNames.indexOf(o2.getProperty());
@@ -143,11 +153,17 @@ public class ResultMap {
             return resultMap;
         }
 
+        /**
+         * 根据参数名称匹配构造器
+         * @param constructorArgNames
+         * @return
+         */
         private List<String> argNamesOfMatchingConstructor(List<String> constructorArgNames) {
             Constructor<?>[] constructors = resultMap.type.getDeclaredConstructors();
             for (Constructor<?> constructor : constructors) {
                 Class<?>[] paramTypes = constructor.getParameterTypes();
                 if (constructorArgNames.size() == paramTypes.length) {
+                    // 获取构造器参数名
                     List<String> paramNames = getArgNames(constructor);
                     if (constructorArgNames.containsAll(paramNames)
                             && argTypesMatch(constructorArgNames, paramTypes, paramNames)) {
@@ -158,10 +174,19 @@ public class ResultMap {
             return null;
         }
 
+        /**
+         * 匹配参数类型
+         * @param constructorArgNames
+         * @param paramTypes
+         * @param paramNames
+         * @return
+         */
         private boolean argTypesMatch(final List<String> constructorArgNames, Class<?>[] paramTypes,
                                       List<String> paramNames) {
             for (int i = 0; i < constructorArgNames.size(); i++) {
+                // 获取 构造器实际的参数类型
                 Class<?> actualType = paramTypes[paramNames.indexOf(constructorArgNames.get(i))];
+                // 获取在mybatis配置中，参数名对应的参数类型
                 Class<?> specifiedType = resultMap.constructorResultMappings.get(i).getJavaType();
                 if (!actualType.equals(specifiedType)) {
                     if (log.isDebugEnabled()) {

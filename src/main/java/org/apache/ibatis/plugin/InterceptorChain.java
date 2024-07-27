@@ -20,12 +20,23 @@ import java.util.Collections;
 import java.util.List;
 
 /**
+ * 拦截器链，持有 Mybatis 中的所有拦截器
  * @author Clinton Begin
  */
 public class InterceptorChain {
 
   private final List<Interceptor> interceptors = new ArrayList<>();
 
+  /**
+   * 给传入的 Object 加上拦截器，实际上最终返回的对象，可能是被 Jdk 代理了N层后的代理对象。
+   * 该方法调用时机：
+   * 1.创建执行器的时候：Configuration#newExecutor(Transaction, ExecutorType)
+   * 2.创建参数处理器的时候：Configuration#newParameterHandler(MappedStatement, Object, BoundSql)
+   * 3.创建响应结果集处理器的时候：Configuration#newResultSetHandler(Executor, MappedStatement, RowBounds, ParameterHandler, ResultHandler, BoundSql)
+   * 4.创建语句处理器的时候：Configuration#newStatementHandler(Executor, MappedStatement, Object, RowBounds, ResultHandler, BoundSql)
+   * @param target
+   * @return
+   */
   public Object pluginAll(Object target) {
     for (Interceptor interceptor : interceptors) {
       target = interceptor.plugin(target);

@@ -15,21 +15,17 @@
  */
 package org.apache.ibatis.session.defaults;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-
 import org.apache.ibatis.exceptions.ExceptionFactory;
 import org.apache.ibatis.executor.ErrorContext;
 import org.apache.ibatis.executor.Executor;
 import org.apache.ibatis.mapping.Environment;
-import org.apache.ibatis.session.Configuration;
-import org.apache.ibatis.session.ExecutorType;
-import org.apache.ibatis.session.SqlSession;
-import org.apache.ibatis.session.SqlSessionFactory;
-import org.apache.ibatis.session.TransactionIsolationLevel;
+import org.apache.ibatis.session.*;
 import org.apache.ibatis.transaction.Transaction;
 import org.apache.ibatis.transaction.TransactionFactory;
 import org.apache.ibatis.transaction.managed.ManagedTransactionFactory;
+
+import java.sql.Connection;
+import java.sql.SQLException;
 
 /**
  * @author Clinton Begin
@@ -42,6 +38,10 @@ public class DefaultSqlSessionFactory implements SqlSessionFactory {
     this.configuration = configuration;
   }
 
+  /**
+   * 开启 SqlSession 会话
+   * @return
+   */
   @Override
   public SqlSession openSession() {
     return openSessionFromDataSource(configuration.getDefaultExecutorType(), null, false);
@@ -87,18 +87,36 @@ public class DefaultSqlSessionFactory implements SqlSessionFactory {
     return configuration;
   }
 
+  /**
+   * 通过执行器创建 SqlSession
+   * @param configuration
+   * @param executor
+   * @param autoCommit
+   * @return
+   */
   protected SqlSession createSqlSession(Configuration configuration, Executor executor, boolean autoCommit) {
     return new DefaultSqlSession(configuration, executor, autoCommit);
   }
 
+  /**
+   * 从 DataSource 开启一个 SqlSession 会话，每次调用都会产生一个执行器，也就是说一个 SqlSession 会创建一个执行器
+   * @param execType 执行器类型 SIMPLE 正常, REUSE 可复用, BATCH 批
+   * @param level 事务级别
+   * @param autoCommit 是否自动提交
+   * @return
+   */
   private SqlSession openSessionFromDataSource(ExecutorType execType, TransactionIsolationLevel level,
       boolean autoCommit) {
     Transaction tx = null;
     try {
       final Environment environment = configuration.getEnvironment();
+      // 获取事务管理管理器
       final TransactionFactory transactionFactory = getTransactionFactoryFromEnvironment(environment);
+      // 基于 DataSource 创建事务对象
       tx = transactionFactory.newTransaction(environment.getDataSource(), level, autoCommit);
+      // 基于 事务对象 和 执行器类型，构建执行器
       final Executor executor = configuration.newExecutor(tx, execType);
+      // 创建 SqlSession
       return createSqlSession(configuration, executor, autoCommit);
     } catch (Exception e) {
       closeTransaction(tx); // may have fetched a connection so lets call close()
@@ -108,6 +126,12 @@ public class DefaultSqlSessionFactory implements SqlSessionFactory {
     }
   }
 
+  /**
+   * 基于 Connection 和 执行器类型 创建 SqlSession
+   * @param execType
+   * @param connection
+   * @return
+   */
   private SqlSession openSessionFromConnection(ExecutorType execType, Connection connection) {
     try {
       boolean autoCommit;
@@ -130,6 +154,11 @@ public class DefaultSqlSessionFactory implements SqlSessionFactory {
     }
   }
 
+  /**
+   * 获取事务管理器（即事务工厂）
+   * @param environment
+   * @return
+   */
   private TransactionFactory getTransactionFactoryFromEnvironment(Environment environment) {
     if (environment == null || environment.getTransactionFactory() == null) {
       return new ManagedTransactionFactory();

@@ -15,15 +15,15 @@
  */
 package org.apache.ibatis.logging.jdbc;
 
+import org.apache.ibatis.logging.Log;
+import org.apache.ibatis.reflection.ExceptionUtil;
+
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
-
-import org.apache.ibatis.logging.Log;
-import org.apache.ibatis.reflection.ExceptionUtil;
 
 /**
  * Connection proxy to add logging.
@@ -64,6 +64,7 @@ public final class ConnectionLogger extends BaseJdbcLogger implements Invocation
   }
 
   /**
+   * 创建一个具有日志功能的connection代理对象
    * Creates a logging version of a connection.
    *
    * @param conn

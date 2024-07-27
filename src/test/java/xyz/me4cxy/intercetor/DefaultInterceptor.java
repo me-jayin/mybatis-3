@@ -10,6 +10,6 @@ import org.apache.ibatis.plugin.Invocation;
 public class DefaultInterceptor implements Interceptor {
     @Override
     public Object intercept(Invocation invocation) throws Throwable {
-        return null;
+        return invocation.proceed();
     }
 }

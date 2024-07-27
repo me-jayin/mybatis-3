@@ -24,6 +24,12 @@ public interface Interceptor {
 
   Object intercept(Invocation invocation) throws Throwable;
 
+  /**
+   * 插件化，默认是使用 org.apache.ibatis.plugin.Plugin#wrap(java.lang.Object, org.apache.ibatis.plugin.Interceptor) 方法
+   * 对 目标对象（如 Executor 执行器） 进行代理，使其应用执行器的能力
+   * @param target
+   * @return
+   */
   default Object plugin(Object target) {
     return Plugin.wrap(target, this);
   }

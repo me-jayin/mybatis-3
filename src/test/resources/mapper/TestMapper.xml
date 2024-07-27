@@ -91,13 +91,17 @@
                     notNullColumn="city"
                     columnPrefix=""
                     fetchType="eager"
-                    typeHandler="xyz.me4cxy.typehandler.CustomJsonTypeHandler"
         >
+<!--                    typeHandler="xyz.me4cxy.typehandler.CustomJsonTypeHandler"-->
             <result property="city" column="city" />
             <result property="province" column="province" />
         </collection>
+        <!-- discriminator 可以用于根据字段值，来整体控制 属性映射的行为。
+             mybatis 在解析 discriminator 时，会把同级的其他参数 ResultMapping 也一同加入到 discriminator 的 ResultMapping中
+         -->
         <discriminator column="pwd" javaType="string">
-            <case value="123">
+            <case value="abc">
+                <result property="usr" column="pwd" />
                 <result property="pwd" column="pwd" />
             </case>
             <case value="222">
@@ -135,8 +139,9 @@
 
 
     -->
-    <select id="selectByCity" resultType="xyz.me4cxy.dto.Address" flushCache="true" useCache="false">
-        SELECT #{value} city, #{value2} province
+<!--    flushCache="true" useCache="false"-->
+    <select id="selectByCity" resultType="xyz.me4cxy.dto.Address">
+        SELECT #{value1} city, #{value2} province
         <if test="value1 == null"></if>
     </select>
 
@@ -151,25 +156,33 @@
         </include>
     </select>
 
-    <select id="selectMultiToList" resultMap="User,usr">
-        SELECT ('123' + 1) AS usr, 'abc' pwd, '广东省' `province`, '深圳' `city`, '${_databaseId}' db;
-        SELECT 'test' as usr;
+    <select id="selectMultiToList" resultMap="User" resultOrdered="true">
+        SELECT ('123' + 1) AS usr, 'abc' pwd, '广东省' `province`, '深圳' `city`, '${_databaseId}' db
+        UNION ALL SELECT ('333' + 1) AS usr, 'abc' pwd, '广东省' `province`, '深圳' `city`, '${_databaseId}' db
+        UNION ALL SELECT ('2322' + 1) AS usr, 'abc' pwd, '广东省' `province`, '深圳1' `city`, '${_databaseId}1' db
+    </select>
+    <select id="selectByIds">
+        SELECT * from t_account where id in
+        <foreach collection="ids" index="idx" item="id" open="(" close=")" nullable="true" separator=",">
+            #{id}
+        </foreach>
     </select>
 
-<!--    &lt;!&ndash;-->
-<!--       resultSets：指定了每个结果集的名称-->
-<!--    &ndash;&gt;-->
-<!--    <resultMap id="User2" type="xyz.me4cxy.dto.User">-->
-<!--        <result column="usr" property="usr" />-->
-<!--        <collection property="address" resultSet="addr" column="usr_n" foreignColumn="usr">-->
-<!--            <result property="city" column="city" />-->
-<!--            <result property="province" column="province" />-->
-<!--        </collection>-->
-<!--    </resultMap>-->
-<!--    <select id="selectMultiToMap" resultMap="User2" resultSets="users,addr" resultType="map">-->
-<!--        SELECT ('123' + 1) AS usr, 'abc' pwd;-->
-<!--        SELECT '1231' usr_n, '广东省' `province`, '深圳' `city`;-->
-<!--    </select>-->
+    <!--
+       resultSets：指定了每个结果集的名称
+    -->
+    <resultMap id="User2" type="xyz.me4cxy.dto.User">
+        <result column="usr" property="usr" />
+        <!-- 指定 address 中的数据，是从 addr 这个名称的结果集中获取的 -->
+        <collection property="address" resultSet="addr" column="usr_n" foreignColumn="usr">
+            <result property="city" column="city" />
+            <result property="province" column="province" />
+        </collection>
+    </resultMap>
+    <select id="selectMultiToMap" resultMap="User2" resultSets="users,addr" resultType="map">
+        SELECT ('123' + 1) AS usr, 'abc' pwd;
+        SELECT '1231' usr_n, '广东省' `province`, '深圳' `city`;
+    </select>
 
     <insert id="insert">
         <!-- selectKey：用于设置生成主键的方式
@@ -185,7 +198,10 @@
         <selectKey databaseId="" resultType="" keyProperty="id" order="AFTER" statementType="PREPARED">
             SELECT LAST_INSERT_ID()
         </selectKey>
-        INSERT INTO user(usr, pwd) VALUES(#{usr}, #{pwd})
+        <!-- #{usr, jdbcType=VARCHAR, javaType=string, numericScaale=3, resultMap=User, mode=IN,
+               typeHandler=xyz.me4cxy.custom.CustomerTypeHandler, jdbcTypeName=CustomerTypeHandler
+             } -->
+        INSERT INTO user(usr, pwd) VALUES(#{usr, jdbcType=VARCHAR}, #{pwd})
     </insert>
 
 </mapper>

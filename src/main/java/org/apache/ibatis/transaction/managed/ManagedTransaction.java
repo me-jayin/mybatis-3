@@ -15,20 +15,23 @@
  */
 package org.apache.ibatis.transaction.managed;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-
-import javax.sql.DataSource;
-
 import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
 import org.apache.ibatis.session.TransactionIsolationLevel;
 import org.apache.ibatis.transaction.Transaction;
 
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.SQLException;
+
 /**
  * {@link Transaction} that lets the container manage the full lifecycle of the transaction. Delays connection retrieval
  * until getConnection() is called. Ignores all commit or rollback requests. By default, it closes the connection but
  * can be configured not to do it.
+ * 使容器能够管理事务的整个生命周期。延迟连接检索，直到调用getConnection（）。忽略所有提交或回滚请求。
+ * 默认情况下，它会关闭连接，但可以配置为不关闭连接。
+ *
+ * （事务的管理都交由外部负责）
  *
  * @author Clinton Begin
  *
@@ -82,11 +85,17 @@ public class ManagedTransaction implements Transaction {
     }
   }
 
+  /**
+   * 打开 connection
+   * @throws SQLException
+   */
   protected void openConnection() throws SQLException {
     if (log.isDebugEnabled()) {
       log.debug("Opening JDBC Connection");
     }
+    // 跳过 DataSource 获取连接对象
     this.connection = this.dataSource.getConnection();
+    // 如果指定了事务隔离级别，则跳过 connection 进行设置
     if (this.level != null) {
       this.connection.setTransactionIsolation(this.level.getLevel());
     }

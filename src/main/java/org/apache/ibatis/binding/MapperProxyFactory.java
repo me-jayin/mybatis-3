@@ -15,42 +15,62 @@
  */
 package org.apache.ibatis.binding;
 
+import org.apache.ibatis.binding.MapperProxy.MapperMethodInvoker;
+import org.apache.ibatis.session.SqlSession;
+
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.ibatis.binding.MapperProxy.MapperMethodInvoker;
-import org.apache.ibatis.session.SqlSession;
-
 /**
+ * Mapper对象的代理工厂，可以根据该工厂构建指定类的 mapper 对象
+ *
  * @author Lasse Voss
  */
 public class MapperProxyFactory<T> {
 
-  private final Class<T> mapperInterface;
-  private final Map<Method, MapperMethodInvoker> methodCache = new ConcurrentHashMap<>();
+    /**
+     * 对应的 mapper 对象
+     */
+    private final Class<T> mapperInterface;
+    /**
+     *
+     */
+    private final Map<Method, MapperMethodInvoker> methodCache = new ConcurrentHashMap<>();
 
-  public MapperProxyFactory(Class<T> mapperInterface) {
-    this.mapperInterface = mapperInterface;
-  }
+    public MapperProxyFactory(Class<T> mapperInterface) {
+        this.mapperInterface = mapperInterface;
+    }
 
-  public Class<T> getMapperInterface() {
-    return mapperInterface;
-  }
+    public Class<T> getMapperInterface() {
+        return mapperInterface;
+    }
 
-  public Map<Method, MapperMethodInvoker> getMethodCache() {
-    return methodCache;
-  }
+    public Map<Method, MapperMethodInvoker> getMethodCache() {
+        return methodCache;
+    }
 
-  @SuppressWarnings("unchecked")
-  protected T newInstance(MapperProxy<T> mapperProxy) {
-    return (T) Proxy.newProxyInstance(mapperInterface.getClassLoader(), new Class[] { mapperInterface }, mapperProxy);
-  }
+    /**
+     * 构建一个jdk代理对象，提供模板方法，供用户执行实现代理方法（不过目前mybatis没有提供设置自定义代理工厂的api，因此目前仍无法通过配置来改变默认的MapperProxyFactory工厂的行为）
+     * @param mapperProxy
+     * @return
+     */
+    @SuppressWarnings("unchecked")
+    protected T newInstance(MapperProxy<T> mapperProxy) {
+        return (T) Proxy.newProxyInstance(mapperInterface.getClassLoader(), new Class[]{mapperInterface}, mapperProxy);
+    }
 
-  public T newInstance(SqlSession sqlSession) {
-    final MapperProxy<T> mapperProxy = new MapperProxy<>(sqlSession, mapperInterface, methodCache);
-    return newInstance(mapperProxy);
-  }
+    /**
+     * 基于 SqlSession 创建一个 Mapper 代理对象
+     *
+     * @param sqlSession
+     * @return
+     */
+    public T newInstance(SqlSession sqlSession) {
+        final MapperProxy<T> mapperProxy = new MapperProxy<>(sqlSession, mapperInterface, methodCache);
+        // 构建一个代理对象，这里预留了一个protected方法，供用户自定义实现
+        return newInstance(mapperProxy);
+    }
 
 }

@@ -148,7 +148,7 @@ public class XMLConfigBuilder extends BaseBuilder {
       databaseIdProviderElement(root.evalNode("databaseIdProvider"));
       // *** 注册 TypeHandlers
       typeHandlersElement(root.evalNode("typeHandlers"));
-      // *** （重点）注册 Mapper
+      // *** （重点）注册 Mapper，会一并将 mapper 类通过注解定义的 statement 一并解析
       mappersElement(root.evalNode("mappers"));
     } catch (Exception e) {
       throw new BuilderException("Error parsing SQL Mapper Configuration. Cause: " + e, e);
@@ -352,6 +352,11 @@ public class XMLConfigBuilder extends BaseBuilder {
     configuration.setNullableOnForEach(booleanValueOf(props.getProperty("nullableOnForEach"), false));
   }
 
+  /**
+   * 解析环境变量标签
+   * @param context
+   * @throws Exception
+   */
   private void environmentsElement(XNode context) throws Exception {
     if (context == null) {
       return;
@@ -473,14 +478,15 @@ public class XMLConfigBuilder extends BaseBuilder {
         String url = child.getStringAttribute("url");
         String mapperClass = child.getStringAttribute("class");
         if (resource != null && url == null && mapperClass == null) {
+          // 基于文件加载
           ErrorContext.instance().resource(resource);
           try (InputStream inputStream = Resources.getResourceAsStream(resource)) {
             XMLMapperBuilder mapperParser = new XMLMapperBuilder(inputStream, configuration, resource,
                 configuration.getSqlFragments());
             mapperParser.parse();
           }
-        } else if (resource == null && url != null && mapperClass == null) {
-          // 通过 url 获取 mapper.xml 并注册 mapper
+        } else if (resource == null && url != null && mapperClass == null) { // 基于远程配置加载
+          // 通过 url 获取 mapper.xml 并注册 mapper，逻辑同 resource 方式
           ErrorContext.instance().resource(url);
           try (InputStream inputStream = Resources.getUrlAsStream(url)) {
             XMLMapperBuilder mapperParser = new XMLMapperBuilder(inputStream, configuration, url,

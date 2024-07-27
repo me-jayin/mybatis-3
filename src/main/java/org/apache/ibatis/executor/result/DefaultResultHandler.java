@@ -15,36 +15,37 @@
  */
 package org.apache.ibatis.executor.result;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.ibatis.reflection.factory.ObjectFactory;
 import org.apache.ibatis.session.ResultContext;
 import org.apache.ibatis.session.ResultHandler;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Clinton Begin
  */
 public class DefaultResultHandler implements ResultHandler<Object> {
 
-  private final List<Object> list;
+    private final List<Object> list;
 
-  public DefaultResultHandler() {
-    list = new ArrayList<>();
-  }
+    public DefaultResultHandler() {
+        list = new ArrayList<>();
+    }
 
-  @SuppressWarnings("unchecked")
-  public DefaultResultHandler(ObjectFactory objectFactory) {
-    list = objectFactory.create(List.class);
-  }
+    @SuppressWarnings("unchecked")
+    public DefaultResultHandler(ObjectFactory objectFactory) {
+        list = objectFactory.create(List.class);
+    }
 
-  @Override
-  public void handleResult(ResultContext<?> context) {
-    list.add(context.getResultObject());
-  }
+    @Override
+    public void handleResult(ResultContext<?> context) {
+        // 直接往结果集 List 中添加
+        list.add(context.getResultObject());
+    }
 
-  public List<Object> getResultList() {
-    return list;
-  }
+    public List<Object> getResultList() {
+        return list;
+    }
 
 }

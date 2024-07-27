@@ -702,6 +702,13 @@ public class Configuration {
         return MetaObject.forObject(object, objectFactory, objectWrapperFactory, reflectorFactory);
     }
 
+    /**
+     * 创建参数处理器，并对参数处理器进行拦截器增强
+     * @param mappedStatement
+     * @param parameterObject
+     * @param boundSql
+     * @return
+     */
     public ParameterHandler newParameterHandler(MappedStatement mappedStatement, Object parameterObject,
                                                 BoundSql boundSql) {
         ParameterHandler parameterHandler = mappedStatement.getLang().createParameterHandler(mappedStatement,
@@ -709,6 +716,16 @@ public class Configuration {
         return (ParameterHandler) interceptorChain.pluginAll(parameterHandler);
     }
 
+    /**
+     * 创建结果集处理器，并进行拦截器增强
+     * @param executor
+     * @param mappedStatement
+     * @param rowBounds
+     * @param parameterHandler
+     * @param resultHandler
+     * @param boundSql
+     * @return
+     */
     public ResultSetHandler newResultSetHandler(Executor executor, MappedStatement mappedStatement, RowBounds rowBounds,
                                                 ParameterHandler parameterHandler, ResultHandler resultHandler, BoundSql boundSql) {
         ResultSetHandler resultSetHandler = new DefaultResultSetHandler(executor, mappedStatement, parameterHandler,
@@ -716,10 +733,25 @@ public class Configuration {
         return (ResultSetHandler) interceptorChain.pluginAll(resultSetHandler);
     }
 
+    /**
+     * 创建一个 StatementHandler，用于构建 PreparedStatement 对象
+     * @param executor
+     * @param mappedStatement
+     * @param parameterObject
+     * @param rowBounds
+     * @param resultHandler
+     * @param boundSql BoundSql，即持有 SQL、请求参数
+     * @return
+     */
     public StatementHandler newStatementHandler(Executor executor, MappedStatement mappedStatement,
                                                 Object parameterObject, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) {
+        // 构建一个 RoutingStatementHandler 路由对象，内部实际上会持有一个 委托对象，而委托对象才是最终 StatementHandler，有以下类型：
+        // 1. SimpleStatementHandler：简单的
+        // 2. PreparedStatementHandler：预处理
+        // 3. CallableStatementHandler：可回调
         StatementHandler statementHandler = new RoutingStatementHandler(executor, mappedStatement, parameterObject,
                 rowBounds, resultHandler, boundSql);
+        // 进行 Interceptor 装配，生成最终代理后的 StatementHandler
         return (StatementHandler) interceptorChain.pluginAll(statementHandler);
     }
 
@@ -727,9 +759,18 @@ public class Configuration {
         return newExecutor(transaction, defaultExecutorType);
     }
 
+    /**
+     * 创建执行器，创建时会有以下操作
+     * 1.会根据缓存的启用来包装 CacheExecutor
+     * 2.使用 Interceptor 对执行器进行加强
+     * @param transaction 事务对象
+     * @param executorType 执行器类型
+     * @return
+     */
     public Executor newExecutor(Transaction transaction, ExecutorType executorType) {
         executorType = executorType == null ? defaultExecutorType : executorType;
         Executor executor;
+        // 根据不同类型创建不同执行器
         if (ExecutorType.BATCH == executorType) {
             executor = new BatchExecutor(this, transaction);
         } else if (ExecutorType.REUSE == executorType) {
@@ -737,9 +778,11 @@ public class Configuration {
         } else {
             executor = new SimpleExecutor(this, transaction);
         }
+        // 是否开启缓存，如果开启则对执行器包装一层 CachingExecutor ，使其具有缓存能力
         if (cacheEnabled) {
             executor = new CachingExecutor(executor);
         }
+        // 将拦截链中的拦截器进行应用，使用 Interceptor 对当前执行器不断进行代理
         return (Executor) interceptorChain.pluginAll(executor);
     }
 
@@ -762,6 +805,7 @@ public class Configuration {
     public boolean hasKeyGenerator(String id) {
         return keyGenerators.containsKey(id);
     }
+
     /** 使用 namespace - cache 的映射 */
     public void addCache(Cache cache) {
         caches.put(cache.getId(), cache);
@@ -828,6 +872,10 @@ public class Configuration {
         return parameterMaps.containsKey(id);
     }
 
+    /**
+     * 注册 MappedStatement
+     * @param ms
+     */
     public void addMappedStatement(MappedStatement ms) {
         mappedStatements.put(ms.getId(), ms);
     }
@@ -910,10 +958,21 @@ public class Configuration {
         return incompleteMethods;
     }
 
+    /**
+     * 获取 MappedStatement 对象
+     * @param id
+     * @return
+     */
     public MappedStatement getMappedStatement(String id) {
         return this.getMappedStatement(id, true);
     }
 
+    /**
+     * 获取 MappedStatement，并根据入参判断是否需要确保所有 statement 都初始化完成
+     * @param id
+     * @param validateIncompleteStatements 判断是否校验未完成的 MappedStatement
+     * @return
+     */
     public MappedStatement getMappedStatement(String id, boolean validateIncompleteStatements) {
         if (validateIncompleteStatements) {
             buildAllStatements();
@@ -937,10 +996,23 @@ public class Configuration {
         mapperRegistry.addMappers(packageName);
     }
 
+    /**
+     * 添加mapper接口类，并进行注册
+     * 该方法会通过 MapperAnnotationBuilder 找到对应 mapper 类加载解析 MappedStatement
+     * @param type
+     * @param <T>
+     */
     public <T> void addMapper(Class<T> type) {
         mapperRegistry.addMapper(type);
     }
 
+    /**
+     * 从 MapperRegistry 中获取 mapper 对象
+     * @param type
+     * @param sqlSession
+     * @return
+     * @param <T>
+     */
     public <T> T getMapper(Class<T> type, SqlSession sqlSession) {
         return mapperRegistry.getMapper(type, sqlSession);
     }
@@ -975,6 +1047,10 @@ public class Configuration {
         parsePendingMethods(true);
     }
 
+    /**
+     * 继续解析 org.apache.ibatis.builder.annotation.MapperAnnotationBuilder#parse() 时未完成的 method
+     * @param reportUnresolved
+     */
     public void parsePendingMethods(boolean reportUnresolved) {
         if (incompleteMethods.isEmpty()) {
             return;
@@ -1029,10 +1105,15 @@ public class Configuration {
         }
     }
 
+    /**
+     * 解析未处理完成的 ResultMap
+     * @param reportUnresolved 如果仍存在 IncompleteElementException 时，是否抛出
+     */
     public void parsePendingResultMaps(boolean reportUnresolved) {
         if (incompleteResultMaps.isEmpty()) {
             return;
         }
+        // 加锁，保证数据安全
         incompleteResultMapsLock.lock();
         try {
             boolean resolved;
@@ -1042,14 +1123,15 @@ public class Configuration {
                 Iterator<ResultMapResolver> iterator = incompleteResultMaps.iterator();
                 while (iterator.hasNext()) {
                     try {
-                        iterator.next().resolve();
-                        iterator.remove();
+                        iterator.next().resolve(); // 继续尝试解析
+                        iterator.remove(); // 解析成功则移除
                         resolved = true;
                     } catch (IncompleteElementException e) {
                         ex = e;
                     }
                 }
             } while (resolved);
+            // 如果需要抛出移除，并且仍存在未完成的 ResultMap 则抛出异常
             if (reportUnresolved && !incompleteResultMaps.isEmpty() && ex != null) {
                 // At least one result map is unresolvable.
                 throw ex;

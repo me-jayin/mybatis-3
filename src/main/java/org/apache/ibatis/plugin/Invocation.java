@@ -15,50 +15,69 @@
  */
 package org.apache.ibatis.plugin;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.List;
-
 import org.apache.ibatis.executor.Executor;
 import org.apache.ibatis.executor.parameter.ParameterHandler;
 import org.apache.ibatis.executor.resultset.ResultSetHandler;
 import org.apache.ibatis.executor.statement.StatementHandler;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.List;
+
 /**
+ * 调用信息封装对象，可获取被调用的方法、原对象，以及方法入参，也可以直接执行被调用方法
+ *
  * @author Clinton Begin
  */
 public class Invocation {
 
-  private static final List<Class<?>> targetClasses = Arrays.asList(Executor.class, ParameterHandler.class,
-      ResultSetHandler.class, StatementHandler.class);
-  private final Object target;
-  private final Method method;
-  private final Object[] args;
+    private static final List<Class<?>> targetClasses = Arrays.asList(Executor.class, ParameterHandler.class,
+            ResultSetHandler.class, StatementHandler.class);
 
-  public Invocation(Object target, Method method, Object[] args) {
-    if (!targetClasses.contains(method.getDeclaringClass())) {
-      throw new IllegalArgumentException("Method '" + method + "' is not supported as a plugin target.");
+    /**
+     * 原对象
+     */
+    private final Object target;
+    /**
+     * 执行的方法
+     */
+    private final Method method;
+    /**
+     * 参数列表
+     */
+    private final Object[] args;
+
+    public Invocation(Object target, Method method, Object[] args) {
+        if (!targetClasses.contains(method.getDeclaringClass())) {
+            throw new IllegalArgumentException("Method '" + method + "' is not supported as a plugin target.");
+        }
+        this.target = target;
+        this.method = method;
+        this.args = args;
     }
-    this.target = target;
-    this.method = method;
-    this.args = args;
-  }
 
-  public Object getTarget() {
-    return target;
-  }
+    public Object getTarget() {
+        return target;
+    }
 
-  public Method getMethod() {
-    return method;
-  }
+    public Method getMethod() {
+        return method;
+    }
 
-  public Object[] getArgs() {
-    return args;
-  }
+    public Object[] getArgs() {
+        return args;
+    }
 
-  public Object proceed() throws InvocationTargetException, IllegalAccessException {
-    return method.invoke(target, args);
-  }
+    /**
+     * 使用原对象、原入参进行调用原方法
+     *
+     * @return
+     * @throws InvocationTargetException
+     * @throws IllegalAccessException
+     */
+    public Object proceed() throws InvocationTargetException, IllegalAccessException {
+        return method.invoke(target, args);
+    }
 
 }

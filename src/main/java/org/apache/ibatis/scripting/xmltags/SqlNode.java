@@ -19,5 +19,13 @@ package org.apache.ibatis.scripting.xmltags;
  * @author Clinton Begin
  */
 public interface SqlNode {
+  /**
+   * 应用 sql 节点，通常如果条件满足，则会调用 {@link DynamicContext#appendSql(String)} 方法拼接sql
+   * 该方法执行后只是得到最终包含占位符的sql语句，如
+   *     select * from a where c = #{c}
+   * 后面还需要基于该sql、入参解析其占位符，得到 ParameterMapping 参数映射列表
+   * @param context
+   * @return
+   */
   boolean apply(DynamicContext context);
 }

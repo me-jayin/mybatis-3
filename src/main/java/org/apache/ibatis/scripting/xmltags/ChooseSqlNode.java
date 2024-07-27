@@ -18,6 +18,7 @@ package org.apache.ibatis.scripting.xmltags;
 import java.util.List;
 
 /**
+ * choose 标签
  * @author Clinton Begin
  */
 public class ChooseSqlNode implements SqlNode {
@@ -31,11 +32,13 @@ public class ChooseSqlNode implements SqlNode {
 
   @Override
   public boolean apply(DynamicContext context) {
+    // 遍历所有的 when 标签，如果满足就执行嵌套标签
     for (SqlNode sqlNode : ifSqlNodes) {
       if (sqlNode.apply(context)) {
         return true;
       }
     }
+    // 如果都不满足，并且存在默认标签则执行
     if (defaultSqlNode != null) {
       defaultSqlNode.apply(context);
       return true;

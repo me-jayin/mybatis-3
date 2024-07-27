@@ -16,6 +16,7 @@
 package org.apache.ibatis.session;
 
 /**
+ * 用于限制查询结果行，通常用于分页，也就是可以设置 跳过行数offset + 返回行数limit
  * @author Clinton Begin
  */
 public class RowBounds {

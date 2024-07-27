@@ -16,6 +16,10 @@
 package org.apache.ibatis.scripting.xmltags;
 
 /**
+ * if标签
+ * <if test="a = '123'">
+ *     a = #{a}
+ * </if>
  * @author Clinton Begin
  */
 public class IfSqlNode implements SqlNode {
@@ -31,6 +35,7 @@ public class IfSqlNode implements SqlNode {
 
   @Override
   public boolean apply(DynamicContext context) {
+    // 如果表达式返回true，则应用嵌套xml标签
     if (evaluator.evaluateBoolean(test, context.getBindings())) {
       contents.apply(context);
       return true;

@@ -95,6 +95,9 @@ public class XMLMapperBuilder extends BaseBuilder {
         this.resource = resource;
     }
 
+    /**
+     * 从xml中解析mapper信息
+     */
     public void parse() {
         // 判断资源是否加载
         if (!configuration.isResourceLoaded(resource)) {
@@ -102,9 +105,10 @@ public class XMLMapperBuilder extends BaseBuilder {
             configurationElement(parser.evalNode("/mapper"));
             // 添加到已加载的资源列表中
             configuration.addLoadedResource(resource);
-
+            // 将命名空间对应的mapper接口注册到configuration中
             bindMapperForNamespace();
         }
+        // 当所有资源都加载完成后，开始处理 incomplete 的数据
         configuration.parsePendingResultMaps(false);
         configuration.parsePendingCacheRefs(false);
         configuration.parsePendingStatements(false);
@@ -483,6 +487,7 @@ public class XMLMapperBuilder extends BaseBuilder {
         String notNullColumn = context.getStringAttribute("notNullColumn");
         String columnPrefix = context.getStringAttribute("columnPrefix");
         String typeHandler = context.getStringAttribute("typeHandler");
+        // 获取当前结果映射的数据来源是从哪个名称的结果集中获取的（要求与select时resultSets指定的名称一致）
         String resultSet = context.getStringAttribute("resultSet");
         String foreignColumn = context.getStringAttribute("foreignColumn");
         boolean lazy = "lazy"
@@ -495,7 +500,8 @@ public class XMLMapperBuilder extends BaseBuilder {
     }
 
     /**
-     * 处理嵌套的result集
+     * 处理嵌套的result集，这个方法实际上会为 association、collection、case 的标签描述信息 与 传入的外部resultMappings
+     * 来构建一个新的 ResultMap，也就是说会为 discriminator 中的每个 case 构建一个 ResultMap
      * @param context
      * @param resultMappings
      * @param enclosingType
@@ -509,6 +515,7 @@ public class XMLMapperBuilder extends BaseBuilder {
                 && context.getStringAttribute("select") == null) {
             validateCollection(context, enclosingType);
             // 将该节点视作 resultMap 进行解析并注册
+            // 注意这里，会传入 discriminator 所在 ResultMap 的 ResultMapping 列表，作为附加映射项，加到 discriminator 解析后的 ResultMap 中
             ResultMap resultMap = resultMapElement(context, resultMappings, enclosingType);
             // 获取其 resultMap 的 id
             return resultMap.getId();
@@ -529,6 +536,9 @@ public class XMLMapperBuilder extends BaseBuilder {
         }
     }
 
+    /**
+     * 将 namespace对应的Mapper接口注册到 configuration 中
+     */
     private void bindMapperForNamespace() {
         String namespace = builderAssistant.getCurrentNamespace();
         if (namespace != null) {
@@ -538,11 +548,14 @@ public class XMLMapperBuilder extends BaseBuilder {
             } catch (ClassNotFoundException e) {
                 // ignore, bound type is not required
             }
+            // 如果找到了对
             if (boundType != null && !configuration.hasMapper(boundType)) {
                 // Spring may not know the real resource name so we set a flag
                 // to prevent loading again this resource from the mapper interface
                 // look at MapperAnnotationBuilder#loadXmlResource
+                // 声明已经加载的数据
                 configuration.addLoadedResource("namespace:" + namespace);
+                // 将mapper接口注册
                 configuration.addMapper(boundType);
             }
         }

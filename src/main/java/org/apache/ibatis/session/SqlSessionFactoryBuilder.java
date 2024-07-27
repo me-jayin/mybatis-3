@@ -34,6 +34,11 @@ import java.util.Properties;
  */
 public class SqlSessionFactoryBuilder {
 
+  /**
+   * 构建一个 DefaultSqlSessionFactory 实例
+   * @param reader
+   * @return
+   */
   public SqlSessionFactory build(Reader reader) {
     return build(reader, null, null);
   }

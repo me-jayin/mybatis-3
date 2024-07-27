@@ -18,9 +18,13 @@ package org.apache.ibatis.scripting.xmltags;
 import java.util.List;
 
 /**
+ * 混合的SqlNode，通常 xml 语句标签解析后，都是返回 MixedSqlNode 标签
  * @author Clinton Begin
  */
 public class MixedSqlNode implements SqlNode {
+  /**
+   * 对sql标签内的动态节点进行封装后的SqlNode集
+   */
   private final List<SqlNode> contents;
 
   public MixedSqlNode(List<SqlNode> contents) {
